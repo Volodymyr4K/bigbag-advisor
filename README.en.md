@@ -1,0 +1,226 @@
+# bigbag-advisor
+
+[![ci](https://github.com/Volodymyr4K/bigbag-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/Volodymyr4K/bigbag-advisor/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[🇺🇦 Українська](README.md) · 🇬🇧 English
+
+A big-bag (FIBC) spec advisor + inbound-request router for departments. The demo is
+configured for a real company — **Trade Group VBA** ([vba.com.ua](https://vba.com.ua/uk/)),
+a manufacturer of big-bags, limestone and mineral powder.
+
+**What it does:** a sales rep (or a customer on the site) types free text —
+*"big bags for sunflower, one ton, shipping by rail"* — and the system returns:
+
+1. a **typical big-bag spec** (size, loops, liner, top, Q-bag),
+2. **which department** the request should go to (big-bags / limestone-powder / general),
+3. a **draft reply** to the customer.
+
+> Every recommendation is grounded in **VBA's real website content** (product pages).
+> These aren't invented tips — it's a formalization of what VBA already writes to customers by hand.
+
+## What it looks like
+
+**Internal sales-desk** (`/`) — for a rep/new hire: spec, department, draft reply:
+
+![sales-desk](docs/screenshots/desk.png)
+
+**Customer widget** (`/widget`) — same core, simpler interface for the website:
+
+![widget](docs/screenshots/widget.png)
+
+---
+
+## Why this exists, honestly
+
+This is not "yet another chatbot". The point of the project is to **measure where AI is
+actually needed and where something simpler is enough**. Picking a big-bag looks like an
+LLM task, but VBA's page is in fact a near-deterministic table: cargo type → spec. So the
+correct engineering stance is to climb the **ladder bottom-up**: dumb rules first, then
+classical ML, and only then an LLM — **measuring at each rung whether the higher rung is
+worth it**. Anti-hype here isn't a slogan but a measured result: on our data the more
+expensive ML does not beat rules (see numbers below).
+
+For the business there is a concrete cost of error: an invented spec (a size VBA doesn't
+sew) = a wrong order = lost money. That's why we measure **hallucinations** separately.
+
+---
+
+## Measured results
+
+The decision ladder — **rules → classical ML → LLM** — on two sets. The benchmark is
+reproducible with one script (`npm run bench`):
+
+- **DEV** (`src/eval/dataset.ts`, 33 cases) — the set I tuned the rules' synonym list on.
+  Rules have a "home advantage" here: they've seen this vocabulary.
+- **HELD-OUT** (`src/eval/heldout.ts`, 23 fresh cases) — the **main** set. The rules never
+  saw these lines, the ML never trained on them. It deliberately includes unseen vocabulary
+  ("rapeseed", "superphosphate", "husk", "gravel"). This is where real generalization shows.
+
+ML is pure TypeScript — a multinomial Naive Bayes over character n-grams (`src/ml/`),
+trained on a **synthetic** set (`src/ml/traindata.ts`).
+
+### DEV (rules' home advantage)
+
+| Engine | Department | Category | Hallucinations ↓ |
+|---|---|---|---|
+| rules | **100% (33/33)** | **100% (22/22)** | 0% |
+| ml (NaiveBayes) | 85% (28/33) | 86% (19/22) | 0% |
+
+### HELD-OUT (fresh vocabulary — the honest picture)
+
+| Engine | Department | Category | Hallucinations ↓ | $/100 | Latency |
+|---|---|---|---|---|---|
+| rules | 91% (21/23) | **50% (7/14)** | 0% | $0 | 0ms |
+| ml (NaiveBayes) | 83% (19/23) | **57% (8/14)** | 0% | $0 | 0ms |
+| llm (grounded) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| llm (no-ground) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+
+### What these numbers honestly say
+
+1. **The 100% on DEV was an illusion.** On HELD-OUT category classification drops to **50%**.
+   Rules hold exactly on the vocabulary the author anticipated; new words ("rapeseed",
+   "superphosphate", "husk") break them. That's the measured cost of a keyword approach.
+2. **ML didn't save the day.** 57% vs 50% on category is **8/14 vs 7/14** — a difference
+   **within noise** on such a small set. Honest conclusion: on synthetic data ML **does not
+   meaningfully beat rules**. Its superpower — learning from data — has nothing to learn
+   from, because the business has no real labelled corpus of requests yet.
+3. **Routing holds up better than classification** (83–91%): telling "big-bag vs limestone"
+   apart is easier than the exact cargo type.
+4. **0% hallucinations everywhere** — because both rules and ML take the spec only from
+   VBA's catalog and physically cannot invent a size. That's by architecture, not luck.
+
+**Hence the real question** (not "ML vs LLM hype"): when you **have no data**, the choice is
+between cheap brittle rules and a zero-shot LLM that handles new vocabulary but costs money
+and can hallucinate. The LLM rows above are ⏳ because **I don't publish numbers I haven't
+measured**.
+
+```bash
+cp .env.example .env          # add OPENROUTER_API_KEY
+npm run bench                 # adds llm / llm-no-ground rows to the table
+```
+
+Expectation (to be confirmed or refuted by numbers): grounded LLM should lift HELD-OUT
+category well above 50–57% (zero-shot handles new words), while no-ground LLM should show
+hallucinations (invented out-of-catalog sizes). If not — the README gets the truth.
+
+---
+
+## Run
+
+```bash
+npm install
+npm run dev            # web: http://localhost:3000
+```
+
+- `/` — internal **sales-desk** for a rep/new hire.
+- `/widget` — simplified **customer widget** for the website.
+
+### Embedding the widget on a site
+
+`?embed=1` strips the extra chrome (header/footer) for a clean `<iframe>`:
+
+```html
+<iframe
+  src="https://YOUR-HOST/widget?embed=1"
+  title="Big-bag advisor"
+  style="width:100%;max-width:760px;height:640px;border:0"
+  loading="lazy">
+</iframe>
+```
+
+Benchmark:
+
+```bash
+npm test               # tests of the core logic (no API)
+npm run bench:offline  # rules + ML (no key, free)
+npm run bench          # + LLM (needs OPENROUTER_API_KEY)
+```
+
+---
+
+## Architecture
+
+```
+data/
+  knowledge-base.json     # source of truth: spec rules, catalog, departments (from VBA's site)
+  raw/                    # raw text of VBA pages (provenance — where the facts came from)
+src/core/
+  rules.ts                # RULES baseline: keywords → category, department, spec
+  ml.ts                   # ML engine: classifier → category, then spec from KB
+  llm.ts                  # LLM via OpenRouter: grounded / no-ground
+  kb.ts                   # KB loader + "out-of-catalog" detector (= hallucination)
+  types.ts
+src/ml/
+  classifier.ts           # multinomial Naive Bayes over char n-grams (pure TS)
+  traindata.ts            # SYNTHETIC training data (clearly labelled as such)
+src/eval/
+  dataset.ts              # DEV: 33 cases (UA/RU/EN + traps) — rules were tuned here
+  heldout.ts              # HELD-OUT: 23 fresh cases with unseen vocabulary
+  bench.ts                # rules vs ml vs llm vs llm-no-ground → two metric tables
+src/app/                  # Next.js: /desk, /widget, /api/advise (one core for all)
+```
+
+The core (`src/core`) doesn't depend on Next — the web app and the CLI bench import it equally.
+
+**The hallucination detector** (`kb.ts → outOfCatalog`) is deterministic: any spec is checked
+against VBA's allowed catalog (base sizes, loop counts, load capacity 500–2000 kg, fabric
+density 110–200 g/m²). A value outside the set = a hallucination. That's how we catch made-up
+specs even from an LLM — with no "LLM judge".
+
+---
+
+## How it fits real work inside the company
+
+One core covers several real VBA processes:
+
+- **saves a rep's time** — no need to keep the spec matrix in your head;
+- **onboarding** — the bot is a living knowledge base for the sales team;
+- **routing** — a request goes straight to the right department (VBA already splits them:
+  big-bags / limestone+powder);
+- **AI assistant for customers** — the same engine as a widget on the site.
+
+Deployment: an internal web app for reps, or an embedded `<iframe>` widget on the site.
+The LLM layer is switched on only where rules measurably lose — not "because AI".
+
+📄 Detailed rollout plan for VBA (processes, staff instructions, how to measure
+effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rollout.md).
+
+---
+
+## Limitations (honestly)
+
+- The sets are small (DEV 33, HELD-OUT 23) and author-curated; on n=14 category cases the
+  rules-vs-ML difference is within noise. This is a demonstration of **method**, not a
+  production validation.
+- ML is trained on **synthetic** data (the business has no real request corpus yet) — so its
+  "loss" to rules is expected and honest, not a verdict on classical ML in general.
+- The spec is **typical**, not final: VBA sews to order, a manager confirms final sizes. The
+  advisor states this in every reply.
+- The rules' synonym list must be extended for new vocabulary (this is exactly where an LLM
+  may help — to be seen from the benchmark).
+- Model prices in `llm.ts` are approximate, for order-of-magnitude cost estimation.
+
+## Part of a series (portfolio thesis)
+
+This project is part of a series with one theme: **honestly measure where AI actually helps
+and where something simpler (rules / classical ML) is enough, without bolting on an LLM for
+hype.** Shared approach: a fixed dataset, a baseline from the bottom, metrics (accuracy,
+hallucinations, cost), a reproducible benchmark.
+
+- [**clauselens**](https://github.com/Volodymyr4K/clauselens) — legal clause analysis with eval.
+- [**deskbench**](https://github.com/Volodymyr4K/deskbench) — front-desk assistant for service businesses, eval-first.
+- [**bigbag-advisor**](https://github.com/Volodymyr4K/bigbag-advisor) — *this one*: the full rules → ML → LLM ladder on held-out.
+- [market-efficiency-lab](https://github.com/Volodymyr4K/market-efficiency-lab) · [ownfleet](https://github.com/Volodymyr4K/ownfleet) · [vendora](https://github.com/Volodymyr4K/vendora) — adjacent projects.
+
+What makes **bigbag-advisor different** from its two neighbours: it's the only one that walks
+the *full* decision ladder (rules → classical ML → LLM) and measures on a **held-out** set
+that the more expensive rung isn't always worth it.
+
+## Stack
+
+Next.js (App Router) · TypeScript · classical ML in pure TS (no Python/deps) · LLM via an
+OpenAI-compatible endpoint (OpenRouter).
+No DB: the knowledge base is a versioned JSON, so a non-programmer can edit it.
+
+MIT.
