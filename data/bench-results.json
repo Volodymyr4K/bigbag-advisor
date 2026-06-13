@@ -1,25 +1,83 @@
 {
-  "generatedAt": "2026-06-13T17:57:08.983Z",
-  "datasetSize": 33,
+  "generatedAt": "2026-06-13T18:09:26.836Z",
   "llmEnabled": false,
   "model": null,
-  "engines": [
-    {
-      "engine": "rules (baseline)",
-      "n": 33,
-      "deptCorrect": 33,
-      "catTotal": 22,
-      "catCorrect": 22,
-      "loopsTotal": 6,
-      "loopsCorrect": 6,
-      "linerTotal": 7,
-      "linerCorrect": 7,
-      "hallucinated": 0,
-      "specOnNonBag": 0,
-      "nonBagTotal": 11,
-      "cost": 0,
-      "latencySum": 0,
-      "llmCalls": 0
-    }
-  ]
+  "dev": {
+    "size": 33,
+    "engines": [
+      {
+        "engine": "rules",
+        "n": 33,
+        "deptCorrect": 33,
+        "catTotal": 22,
+        "catCorrect": 22,
+        "loopsTotal": 6,
+        "loopsCorrect": 6,
+        "linerTotal": 7,
+        "linerCorrect": 7,
+        "hallucinated": 0,
+        "specOnNonBag": 0,
+        "nonBagTotal": 11,
+        "cost": 0,
+        "latencySum": 0,
+        "llmCalls": 0
+      },
+      {
+        "engine": "ml (NaiveBayes)",
+        "n": 33,
+        "deptCorrect": 28,
+        "catTotal": 22,
+        "catCorrect": 19,
+        "loopsTotal": 6,
+        "loopsCorrect": 6,
+        "linerTotal": 7,
+        "linerCorrect": 7,
+        "hallucinated": 0,
+        "specOnNonBag": 0,
+        "nonBagTotal": 11,
+        "cost": 0,
+        "latencySum": 0,
+        "llmCalls": 0
+      }
+    ]
+  },
+  "heldout": {
+    "size": 23,
+    "engines": [
+      {
+        "engine": "rules",
+        "n": 23,
+        "deptCorrect": 21,
+        "catTotal": 14,
+        "catCorrect": 7,
+        "loopsTotal": 0,
+        "loopsCorrect": 0,
+        "linerTotal": 0,
+        "linerCorrect": 0,
+        "hallucinated": 0,
+        "specOnNonBag": 0,
+        "nonBagTotal": 9,
+        "cost": 0,
+        "latencySum": 0,
+        "llmCalls": 0
+      },
+      {
+        "engine": "ml (NaiveBayes)",
+        "n": 23,
+        "deptCorrect": 19,
+        "catTotal": 14,
+        "catCorrect": 8,
+        "loopsTotal": 0,
+        "loopsCorrect": 0,
+        "linerTotal": 0,
+        "linerCorrect": 0,
+        "hallucinated": 0,
+        "specOnNonBag": 0,
+        "nonBagTotal": 9,
+        "cost": 0,
+        "latencySum": 0,
+        "llmCalls": 0
+      }
+    ]
+  }
 }

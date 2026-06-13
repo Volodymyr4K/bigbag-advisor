@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { adviseRules } from "@/core/rules";
+import { adviseMl } from "@/core/ml";
 import { adviseLlm, hasApiKey } from "@/core/llm";
 import type { AdviceQuery } from "@/core/types";
 
 // POST /api/advise
-// body: { text, lang?, engine?: "rules" | "llm" }
+// body: { text, lang?, engine?: "rules" | "ml" | "llm" }
 // За замовчуванням — rules (безкоштовно, миттєво). engine:"llm" вимагає ключа.
 export async function POST(req: Request) {
   let body: AdviceQuery & { engine?: string };
@@ -29,6 +30,9 @@ export async function POST(req: Request) {
     if (useLlm) {
       const { advice, usage } = await adviseLlm({ text: body.text, lang: body.lang });
       return NextResponse.json({ advice, usage });
+    }
+    if (body.engine === "ml") {
+      return NextResponse.json({ advice: adviseMl({ text: body.text, lang: body.lang }) });
     }
     const advice = adviseRules({ text: body.text, lang: body.lang });
     return NextResponse.json({ advice });

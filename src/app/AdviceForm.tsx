@@ -18,7 +18,7 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
   const [usage, setUsage] = useState<{ costUsd: number; latencyMs: number; model: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function run(engine: "rules" | "llm") {
+  async function run(engine: "rules" | "ml" | "llm") {
     if (!text.trim()) return;
     setLoading(true);
     setErr(null);
@@ -63,9 +63,14 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
           {loading ? "…" : "Підібрати (правила)"}
         </button>
         {variant === "desk" && (
-          <button className="ghost" onClick={() => run("llm")} disabled={loading}>
-            Через LLM
-          </button>
+          <>
+            <button className="ghost" onClick={() => run("ml")} disabled={loading}>
+              Через ML
+            </button>
+            <button className="ghost" onClick={() => run("llm")} disabled={loading}>
+              Через LLM
+            </button>
+          </>
         )}
       </div>
 

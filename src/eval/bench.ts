@@ -1,16 +1,21 @@
-// БЕНЧ: rules vs LLM(grounded) vs LLM(no-ground) на розміченому датасеті.
+// БЕНЧ: rules vs ML vs LLM(grounded) vs LLM(no-ground).
+//
+// Дві таблиці:
+//   DEV (33 кейси)      — набір, на якому тюнились синоніми правил. Тут у правил
+//                         «домашня перевага» (вони бачили цю лексику).
+//   HELD-OUT (свіжі)    — головна таблиця. Цих рядків правила НЕ бачили, ML на
+//                         них НЕ тренувався. Тут видно реальну генералізацію.
 //
 // Чесність:
-//  - Без OPENROUTER_API_KEY ганяємо ЛИШЕ rules (реальні числа, відтворювані
-//    будь-ким безкоштовно). LLM-колонки позначаємо як SKIPPED.
-//  - Нічого не хардкодимо в результати. Що порахувалось — те й друкуємо.
-//
-// Запуск:  npm run bench         (rules + LLM, потрібен ключ)
-//          npm run bench:rules   (тільки rules)
+//   - rules + ML працюють без ключа (реальні, безкоштовні, відтворювані числа).
+//   - LLM-колонки рахуються лише за наявності OPENROUTER_API_KEY; інакше SKIPPED.
+//   - Нічого не хардкодимо. Що порахувалось — те й друкуємо.
 
 import { writeFileSync } from "node:fs";
 import { DATASET, type Case } from "./dataset";
+import { HELDOUT } from "./heldout";
 import { adviseRules } from "../core/rules";
+import { adviseMl } from "../core/ml";
 import { adviseLlm, adviseLlmNoGround, hasApiKey, type LlmUsage } from "../core/llm";
 import type { Advice } from "../core/types";
 
@@ -18,14 +23,13 @@ interface EngineStats {
   engine: string;
   n: number;
   deptCorrect: number;
-  catTotal: number; // скільки кейсів мають expectedCategory != null
+  catTotal: number;
   catCorrect: number;
   loopsTotal: number;
   loopsCorrect: number;
   linerTotal: number;
   linerCorrect: number;
-  hallucinated: number; // кейси з outOfCatalog != []
-  // Контроль пасток: spec там, де його НЕ мало бути (expectedCategory=null).
+  hallucinated: number;
   specOnNonBag: number;
   nonBagTotal: number;
   cost: number;
@@ -44,7 +48,6 @@ function emptyStats(engine: string): EngineStats {
 function grade(s: EngineStats, c: Case, a: Advice, usage?: LlmUsage) {
   s.n++;
   if (a.routedTo.id === c.expectedDept) s.deptCorrect++;
-
   if (c.expectedCategory != null) {
     s.catTotal++;
     if (a.spec?.category === c.expectedCategory) s.catCorrect++;
@@ -58,9 +61,8 @@ function grade(s: EngineStats, c: Case, a: Advice, usage?: LlmUsage) {
     }
   } else {
     s.nonBagTotal++;
-    if (a.spec) s.specOnNonBag++; // вигадав spec там, де його не мало бути
+    if (a.spec) s.specOnNonBag++;
   }
-
   if (a.flags.outOfCatalog.length > 0) s.hallucinated++;
   if (usage) {
     s.cost += usage.costUsd;
@@ -77,28 +79,24 @@ function pct(n: number, d: number): string {
 function row(s: EngineStats): Record<string, string> {
   return {
     engine: s.engine,
-    "Відділ (роутинг)": pct(s.deptCorrect, s.n),
+    "Відділ": pct(s.deptCorrect, s.n),
     "Категорія": pct(s.catCorrect, s.catTotal),
-    "Стропи": pct(s.loopsCorrect, s.loopsTotal),
-    "Вкладиш": pct(s.linerCorrect, s.linerTotal),
     "Галюцинації ↓": pct(s.hallucinated, s.n),
     "Spec на не-бег ↓": pct(s.specOnNonBag, s.nonBagTotal),
-    "$/100 запитів": s.llmCalls ? `$${((s.cost / s.llmCalls) * 100).toFixed(3)}` : "$0",
-    "Латентність": s.llmCalls ? `${Math.round(s.latencySum / s.llmCalls)}ms` : "—",
+    "$/100": s.llmCalls ? `$${((s.cost / s.llmCalls) * 100).toFixed(3)}` : "$0",
+    "Латентн.": s.llmCalls ? `${Math.round(s.latencySum / s.llmCalls)}ms` : "0ms",
   };
 }
 
-async function main() {
-  const useLlm = hasApiKey() && !process.env.RULES_ONLY;
-  console.log(`\nДатасет: ${DATASET.length} кейсів (UA/RU/EN + пастки)`);
-  console.log(`LLM: ${useLlm ? `УВІМКНЕНО (${process.env.LLM_MODEL || "openai/gpt-4o-mini"})` : "ВИМКНЕНО (нема ключа або RULES_ONLY)"}\n`);
-
-  const rules = emptyStats("rules (baseline)");
+async function runDataset(cases: Case[], useLlm: boolean): Promise<EngineStats[]> {
+  const rules = emptyStats("rules");
+  const ml = emptyStats("ml (NaiveBayes)");
   const llm = emptyStats("llm (grounded)");
   const llmNG = emptyStats("llm (no-ground)");
 
-  for (const c of DATASET) {
+  for (const c of cases) {
     grade(rules, c, adviseRules({ text: c.text, lang: c.lang }));
+    grade(ml, c, adviseMl({ text: c.text, lang: c.lang }));
     if (useLlm) {
       try {
         const g = await adviseLlm({ text: c.text, lang: c.lang });
@@ -114,28 +112,37 @@ async function main() {
       }
     }
   }
+  return useLlm ? [rules, ml, llm, llmNG] : [rules, ml];
+}
 
-  const rows = [row(rules)];
-  if (useLlm) rows.push(row(llm), row(llmNG));
-  console.table(rows);
+async function main() {
+  const useLlm = hasApiKey() && !process.env.RULES_ONLY;
+  console.log(`\nLLM: ${useLlm ? `УВІМКНЕНО (${process.env.LLM_MODEL || "openai/gpt-4o-mini"})` : "ВИМКНЕНО (нема ключа або RULES_ONLY)"}`);
+  console.log("ML тренується на синтетичних даних (src/ml/traindata.ts), тест — на наборах нижче.\n");
+
+  console.log(`=== DEV (${DATASET.length} кейсів; правила тут мають «домашню перевагу») ===`);
+  const dev = await runDataset(DATASET, useLlm);
+  console.table(dev.map(row));
+
+  console.log(`\n=== HELD-OUT (${HELDOUT.length} свіжих кейсів; нова лексика; головна таблиця) ===`);
+  const held = await runDataset(HELDOUT, useLlm);
+  console.table(held.map(row));
 
   console.log("\nЯк читати:");
-  console.log("  ↓ = менше краще (галюцинації, spec там де не треба).");
-  console.log("  «Галюцинації» = специфікація містить значення поза каталогом VBA.");
-  console.log("  «Spec на не-бег» = система вигадала біг-бег у відповідь на запит про вапняк/розпливчасте.\n");
+  console.log("  ↓ = менше краще. «Галюцинації» = spec поза каталогом VBA.");
+  console.log("  Падіння rules/ML між DEV і HELD-OUT = ціна крихкості до нової лексики.");
+  console.log("  LLM на HELD-OUT — перевірка, чи zero-shot тягне нову лексику без галюцинацій.\n");
 
   const out = {
     generatedAt: new Date().toISOString(),
-    datasetSize: DATASET.length,
     llmEnabled: useLlm,
     model: useLlm ? process.env.LLM_MODEL || "openai/gpt-4o-mini" : null,
-    engines: useLlm ? [rules, llm, llmNG] : [rules],
+    dev: { size: DATASET.length, engines: dev },
+    heldout: { size: HELDOUT.length, engines: held },
   };
   writeFileSync(new URL("../../data/bench-results.json", import.meta.url), JSON.stringify(out, null, 2));
   console.log("Збережено: data/bench-results.json");
-  if (!useLlm) {
-    console.log("\nЩоб отримати числа LLM — додай OPENROUTER_API_KEY у .env і запусти `npm run bench`.");
-  }
+  if (!useLlm) console.log("\nЩоб додати LLM-колонки — впиши OPENROUTER_API_KEY у .env і запусти `npm run bench`.");
 }
 
 main().catch((e) => {
