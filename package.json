@@ -1,0 +1,26 @@
+{
+  "name": "bigbag-advisor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Чесно-виміряний радник підбору біг-бегів + маршрутизатор запитів у відділи. Демо-конфіг під Торгову Групу ВБА.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "bench": "tsx src/eval/bench.ts",
+    "bench:rules": "RULES_ONLY=1 tsx src/eval/bench.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.0",
+    "@types/react": "18.3.3",
+    "tsx": "4.16.2",
+    "typescript": "5.5.3"
+  }
+}

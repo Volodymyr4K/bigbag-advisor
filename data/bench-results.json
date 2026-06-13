@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-06-13T17:57:08.983Z",
+  "datasetSize": 33,
+  "llmEnabled": false,
+  "model": null,
+  "engines": [
+    {
+      "engine": "rules (baseline)",
+      "n": 33,
+      "deptCorrect": 33,
+      "catTotal": 22,
+      "catCorrect": 22,
+      "loopsTotal": 6,
+      "loopsCorrect": 6,
+      "linerTotal": 7,
+      "linerCorrect": 7,
+      "hallucinated": 0,
+      "specOnNonBag": 0,
+      "nonBagTotal": 11,
+      "cost": 0,
+      "latencySum": 0,
+      "llmCalls": 0
+    }
+  ]
+}
