@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-13T18:32:53.965Z",
+  "generatedAt": "2026-06-13T18:45:06.081Z",
   "llmEnabled": false,
   "model": null,
   "dev": {
@@ -47,7 +47,7 @@
       {
         "engine": "rules",
         "n": 44,
-        "deptCorrect": 42,
+        "deptCorrect": 43,
         "catTotal": 29,
         "catCorrect": 14,
         "loopsTotal": 0,

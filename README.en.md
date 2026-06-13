@@ -72,7 +72,7 @@ trained on a **synthetic** set (`src/ml/traindata.ts`).
 
 | Engine | Department | Category | Hallucinations ↓ | $/100 | Latency |
 |---|---|---|---|---|---|
-| rules | **95% (42/44)** | 48% (14/29) | 0% | $0 | 0ms |
+| rules | **98% (43/44)** | 48% (14/29) | 0% | $0 | 0ms |
 | ml (NaiveBayes) | 84% (37/44) | **59% (17/29)** | 0% | $0 | 0ms |
 | llm (grounded) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | llm (no-ground) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -92,7 +92,7 @@ Note the nuance: on "rapeseed" ML guessed `grain`, while on "superphosphate" it 
    both fail most of the new vocabulary. Honest conclusion: on synthetic data ML gives **no
    clear-cut win** — better in places, worse in others. Its superpower (learning from data)
    has nothing to learn from: there's no real labelled corpus yet.
-3. **Routing holds up better than classification** (84–95%): telling "big-bag vs limestone"
+3. **Routing holds up better than classification** (84–98%): telling "big-bag vs limestone"
    apart is easier than the exact cargo type.
 4. **0% hallucinations everywhere** — because both rules and ML take the spec only from
    VBA's catalog and physically cannot invent a size. That's by architecture, not luck.
@@ -201,8 +201,10 @@ data-starved because there's **no labelled corpus of requests yet**. So the syst
 one itself: every query where it couldn't give a confident spec (low confidence / "general"
 department) is quietly logged ([`src/core/misslog.ts`](src/core/misslog.ts) →
 `data/miss-log.jsonl`, view via `GET /api/misses`). Over months this becomes a real dataset
-the ML can finally learn from. Honest caveat: on serverless (Vercel) the filesystem is
-ephemeral — in production this should point at a DB.
+the ML can finally learn from. Two honest caveats: on serverless (Vercel) the filesystem is
+ephemeral — in production this should point at a DB; and since the endpoint returns real
+customer query text, set env `MISSES_TOKEN` to lock it before any public deploy (without it
+the endpoint is open — local use only).
 
 📄 Detailed rollout plan for VBA (processes, staff instructions, how to measure
 effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rollout.md).

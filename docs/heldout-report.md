@@ -3,7 +3,7 @@
 > Згенеровано автоматично: `npm run report`. Тільки rules + ML (без LLM).
 > Кожна клітинка: `відділ` / `категорія`, ✓ — збіг з очікуваним, ✗ — промах.
 
-**Підсумок (44 кейсів):** rules — відділ 42/44, категорія 14/29; ML — відділ 37/44, категорія 17/29.
+**Підсумок (44 кейсів):** rules — відділ 43/44, категорія 14/29; ML — відділ 37/44, категорія 17/29.
 
 Найцікавіше — рядки з ✗ на невиданій лексиці (ріпак, суперфосфат, лушпиння, гравій, крейда):
 саме там видно межу підходів «ключові слова» і ML на малих даних.
@@ -25,7 +25,7 @@
 | `h-dolomite` | цікавить доломітове борошно для ґрунту | limestone_powder<br>— | ✓ limestone_powder<br>— | ✓ limestone_powder<br>— |
 | `h-chalk` | потрібна крейда мелена, оптом | limestone_powder<br>— | ✗ general<br>— | ✗ general<br>— |
 | `h-typo` | біг бегі під зерно потрбіно терміново | bigbag<br>grain | ✓ bigbag<br>✓ grain | ✓ bigbag<br>✓ grain |
-| `h-en-1` | big bags for sunflower seeds, 1 ton, by rail | bigbag<br>grain | ✗ general<br>✗ — | ✗ general<br>✗ — |
+| `h-en-1` | big bags for sunflower seeds, 1 ton, by rail | bigbag<br>grain | ✓ bigbag<br>✗ — | ✗ general<br>✗ — |
 | `h-en-2` | do you sell limestone for soil, fraction 0-5? | limestone_powder<br>— | ✓ limestone_powder<br>— | ✗ general<br>— |
 | `h-mixed-1` | є питання по бегах під добрива і ще по вапняку | bigbag<br>fertilizer | ✓ bigbag<br>✓ fertilizer | ✗ general<br>✗ — |
 | `h-trap-pallet` | чи продаєте ви палети дерев'яні? | general<br>— | ✓ general<br>— | ✓ general<br>— |
