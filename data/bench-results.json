@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-13T18:16:50.564Z",
+  "generatedAt": "2026-06-13T18:32:53.965Z",
   "llmEnabled": false,
   "model": null,
   "dev": {
@@ -42,38 +42,38 @@
     ]
   },
   "heldout": {
-    "size": 23,
+    "size": 44,
     "engines": [
       {
         "engine": "rules",
-        "n": 23,
-        "deptCorrect": 21,
-        "catTotal": 14,
-        "catCorrect": 7,
+        "n": 44,
+        "deptCorrect": 42,
+        "catTotal": 29,
+        "catCorrect": 14,
         "loopsTotal": 0,
         "loopsCorrect": 0,
         "linerTotal": 0,
         "linerCorrect": 0,
         "hallucinated": 0,
         "specOnNonBag": 0,
-        "nonBagTotal": 9,
+        "nonBagTotal": 15,
         "cost": 0,
         "latencySum": 0,
         "llmCalls": 0
       },
       {
         "engine": "ml (NaiveBayes)",
-        "n": 23,
-        "deptCorrect": 19,
-        "catTotal": 14,
-        "catCorrect": 8,
+        "n": 44,
+        "deptCorrect": 37,
+        "catTotal": 29,
+        "catCorrect": 17,
         "loopsTotal": 0,
         "loopsCorrect": 0,
         "linerTotal": 0,
         "linerCorrect": 0,
         "hallucinated": 0,
         "specOnNonBag": 0,
-        "nonBagTotal": 9,
+        "nonBagTotal": 15,
         "cost": 0,
         "latencySum": 0,
         "llmCalls": 0

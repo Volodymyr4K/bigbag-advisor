@@ -40,4 +40,45 @@ export const HELDOUT: Case[] = [
   { id: "h-trap-vague", lang: "uk", text: "вітаю, підкажіть будь ласка по продукції", expectedDept: "general", expectedCategory: null, note: "розпливчасто" },
   { id: "h-trap-delivery", lang: "uk", text: "а ви возите в Польщу?", expectedDept: "general", expectedCategory: null, note: "логістика, без продукту" },
   { id: "h-trap-overload", lang: "ru", text: "нужен биг бэг под зерно на 5 тонн", expectedDept: "bigbag", expectedCategory: "grain", note: "5т > каталог" },
+
+  // === Розширення (друга хвиля) — більше n, менше шуму ======================
+
+  // зерно/бобові, переважно невидана лексика
+  { id: "h-millet", lang: "uk", text: "тара під просо, тонна", expectedDept: "bigbag", expectedCategory: "grain", note: "просо — невидане" },
+  { id: "h-sorghum", lang: "uk", text: "біг-беги під сорго", expectedDept: "bigbag", expectedCategory: "grain", note: "сорго — невидане" },
+  { id: "h-lentil", lang: "uk", text: "потрібні беги під чечевицю", expectedDept: "bigbag", expectedCategory: "grain", note: "чечевиця — невидане" },
+  { id: "h-chickpea", lang: "ru", text: "биг бэги под нут", expectedDept: "bigbag", expectedCategory: "grain", note: "нут — невидане" },
+  { id: "h-beans", lang: "uk", text: "пакування під квасолю", expectedDept: "bigbag", expectedCategory: "grain", note: "бобові → зерно" },
+
+  // добрива
+  { id: "h-diamm", lang: "uk", text: "беги під діамофоску", expectedDept: "bigbag", expectedCategory: "fertilizer", note: "діамофоска — невидане" },
+  { id: "h-urea", lang: "ru", text: "нужны биг беги под мочевину", expectedDept: "bigbag", expectedCategory: "fertilizer", note: "мочевина — невидане" },
+
+  // макуха/жмих
+  { id: "h-rapemeal", lang: "uk", text: "беги під ріпаковий шрот", expectedDept: "bigbag", expectedCategory: "oilcake" },
+  { id: "h-rapecake", lang: "uk", text: "макуха ріпакова, тонна", expectedDept: "bigbag", expectedCategory: "oilcake" },
+
+  // біопаливо
+  { id: "h-agripellet", lang: "uk", text: "потрібні беги під агропелети", expectedDept: "bigbag", expectedCategory: "biofuel" },
+  { id: "h-peat", lang: "ru", text: "тара под торфобрикеты", expectedDept: "bigbag", expectedCategory: "biofuel" },
+
+  // комбікорм
+  { id: "h-fishfeed", lang: "uk", text: "беги під корм для риби", expectedDept: "bigbag", expectedCategory: "feed" },
+
+  // кар'єр
+  { id: "h-keramzit", lang: "uk", text: "тара під керамзит", expectedDept: "bigbag", expectedCategory: "quarry", note: "керамзит — невидане" },
+  { id: "h-butstone", lang: "uk", text: "біг-беги під бутовий камінь", expectedDept: "bigbag", expectedCategory: "quarry" },
+
+  // вапняк/порошок
+  { id: "h-mp2", lang: "ru", text: "интересует минеральный порошок МП-2", expectedDept: "limestone_powder", expectedCategory: null },
+  { id: "h-finelime", lang: "uk", text: "потрібен тонкомелений вапняк", expectedDept: "limestone_powder", expectedCategory: null },
+
+  // EN
+  { id: "h-en-barley", lang: "en", text: "fibc bags for barley export, 1t", expectedDept: "bigbag", expectedCategory: "grain" },
+  { id: "h-en-mp", lang: "en", text: "price for mineral powder MP-1", expectedDept: "limestone_powder", expectedCategory: null },
+
+  // пастки / не наш профіль
+  { id: "h-trap-invoice", lang: "uk", text: "можна рахунок-фактуру на оплату?", expectedDept: "general", expectedCategory: null },
+  { id: "h-trap-return", lang: "uk", text: "хочу повернути партію, виявили брак", expectedDept: "general", expectedCategory: null },
+  { id: "h-trap-office", lang: "ru", text: "где находится ваш офис?", expectedDept: "general", expectedCategory: null },
 ];

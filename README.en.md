@@ -53,9 +53,10 @@ reproducible with one script (`npm run bench`):
 
 - **DEV** (`src/eval/dataset.ts`, 33 cases) — the set I tuned the rules' synonym list on.
   Rules have a "home advantage" here: they've seen this vocabulary.
-- **HELD-OUT** (`src/eval/heldout.ts`, 23 fresh cases) — the **main** set. The rules never
+- **HELD-OUT** (`src/eval/heldout.ts`, 44 fresh cases) — the **main** set. The rules never
   saw these lines, the ML never trained on them. It deliberately includes unseen vocabulary
-  ("rapeseed", "superphosphate", "husk", "gravel"). This is where real generalization shows.
+  ("rapeseed", "superphosphate", "husk", "gravel", "expanded clay", "chickpea"). This is
+  where real generalization shows.
 
 ML is pure TypeScript — a multinomial Naive Bayes over character n-grams (`src/ml/`),
 trained on a **synthetic** set (`src/ml/traindata.ts`).
@@ -71,8 +72,8 @@ trained on a **synthetic** set (`src/ml/traindata.ts`).
 
 | Engine | Department | Category | Hallucinations ↓ | $/100 | Latency |
 |---|---|---|---|---|---|
-| rules | 91% (21/23) | **50% (7/14)** | 0% | $0 | 0ms |
-| ml (NaiveBayes) | 83% (19/23) | **57% (8/14)** | 0% | $0 | 0ms |
+| rules | **95% (42/44)** | 48% (14/29) | 0% | $0 | 0ms |
+| ml (NaiveBayes) | 84% (37/44) | **59% (17/29)** | 0% | $0 | 0ms |
 | llm (grounded) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | llm (no-ground) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 
@@ -82,14 +83,16 @@ Note the nuance: on "rapeseed" ML guessed `grain`, while on "superphosphate" it 
 
 ### What these numbers honestly say
 
-1. **The 100% on DEV was an illusion.** On HELD-OUT category classification drops to **50%**.
+1. **The 100% on DEV was an illusion.** On HELD-OUT category classification drops to **48%**.
    Rules hold exactly on the vocabulary the author anticipated; new words ("rapeseed",
-   "superphosphate", "husk") break them. That's the measured cost of a keyword approach.
-2. **ML didn't save the day.** 57% vs 50% on category is **8/14 vs 7/14** — a difference
-   **within noise** on such a small set. Honest conclusion: on synthetic data ML **does not
-   meaningfully beat rules**. Its superpower — learning from data — has nothing to learn
-   from, because the business has no real labelled corpus of requests yet.
-3. **Routing holds up better than classification** (83–91%): telling "big-bag vs limestone"
+   "superphosphate", "expanded clay") break them. That's the measured cost of a keyword approach.
+2. **ML gives a modest edge — but no rescue.** Category: **59% (17/29) vs 48% (14/29)** for
+   rules. On n=29 that's no longer pure noise: char n-grams sometimes generalize to unseen
+   words (on "rapeseed" ML guessed `grain`). BUT on routing ML is **worse** (84% vs 95%), and
+   both fail most of the new vocabulary. Honest conclusion: on synthetic data ML gives **no
+   clear-cut win** — better in places, worse in others. Its superpower (learning from data)
+   has nothing to learn from: there's no real labelled corpus yet.
+3. **Routing holds up better than classification** (84–95%): telling "big-bag vs limestone"
    apart is easier than the exact cargo type.
 4. **0% hallucinations everywhere** — because both rules and ML take the spec only from
    VBA's catalog and physically cannot invent a size. That's by architecture, not luck.
@@ -105,7 +108,7 @@ npm run bench                 # adds llm / llm-no-ground rows to the table
 ```
 
 Expectation (to be confirmed or refuted by numbers): grounded LLM should lift HELD-OUT
-category well above 50–57% (zero-shot handles new words), while no-ground LLM should show
+category well above 48–59% (zero-shot handles new words), while no-ground LLM should show
 hallucinations (invented out-of-catalog sizes). If not — the README gets the truth.
 
 ---
@@ -139,6 +142,8 @@ Benchmark:
 npm test               # tests of the core logic (no API)
 npm run bench:offline  # rules + ML (no key, free)
 npm run bench          # + LLM (needs OPENROUTER_API_KEY)
+npm run report         # per-case held-out breakdown → docs/heldout-report.md
+npm run scrape         # re-pull VBA pages + verify "beacons" (provenance)
 ```
 
 ---
@@ -154,15 +159,19 @@ src/core/
   ml.ts                   # ML engine: classifier → category, then spec from KB
   llm.ts                  # LLM via OpenRouter: grounded / no-ground
   kb.ts                   # KB loader + "out-of-catalog" detector (= hallucination)
+  misslog.ts              # flywheel: logs low-confidence queries (future ML corpus)
   types.ts
+scripts/
+  scrape.ts               # provenance: re-pull VBA pages + verify "beacons"
 src/ml/
   classifier.ts           # multinomial Naive Bayes over char n-grams (pure TS)
   traindata.ts            # SYNTHETIC training data (clearly labelled as such)
 src/eval/
   dataset.ts              # DEV: 33 cases (UA/RU/EN + traps) — rules were tuned here
-  heldout.ts              # HELD-OUT: 23 fresh cases with unseen vocabulary
+  heldout.ts              # HELD-OUT: 44 fresh cases with unseen vocabulary
   bench.ts                # rules vs ml vs llm vs llm-no-ground → two metric tables
-src/app/                  # Next.js: /desk, /widget, /api/advise (one core for all)
+  report.ts               # per-case held-out breakdown → docs/heldout-report.md
+src/app/                  # Next.js: /desk, /widget, /api/advise, /api/misses
 ```
 
 The core (`src/core`) doesn't depend on Next — the web app and the CLI bench import it equally.
@@ -187,6 +196,14 @@ One core covers several real VBA processes:
 Deployment: an internal web app for reps, or an embedded `<iframe>` widget on the site.
 The LLM layer is switched on only where rules measurably lose — not "because AI".
 
+**Data-collection flywheel.** The measurements exposed the main gap: classical ML is
+data-starved because there's **no labelled corpus of requests yet**. So the system collects
+one itself: every query where it couldn't give a confident spec (low confidence / "general"
+department) is quietly logged ([`src/core/misslog.ts`](src/core/misslog.ts) →
+`data/miss-log.jsonl`, view via `GET /api/misses`). Over months this becomes a real dataset
+the ML can finally learn from. Honest caveat: on serverless (Vercel) the filesystem is
+ephemeral — in production this should point at a DB.
+
 📄 Detailed rollout plan for VBA (processes, staff instructions, how to measure
 effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rollout.md).
 
@@ -194,9 +211,9 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
 
 ## Limitations (honestly)
 
-- The sets are small (DEV 33, HELD-OUT 23) and author-curated; on n=14 category cases the
-  rules-vs-ML difference is within noise. This is a demonstration of **method**, not a
-  production validation.
+- The sets are small (DEV 33, HELD-OUT 44) and author-curated; even on n=29 category cases
+  the numbers are indicative only. This is a demonstration of **method**, not a production
+  validation.
 - ML is trained on **synthetic** data (the business has no real request corpus yet) — so its
   "loss" to rules is expected and honest, not a verdict on classical ML in general.
 - The spec is **typical**, not final: VBA sews to order, a manager confirms final sizes. The

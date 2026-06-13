@@ -3,7 +3,7 @@
 > Згенеровано автоматично: `npm run report`. Тільки rules + ML (без LLM).
 > Кожна клітинка: `відділ` / `категорія`, ✓ — збіг з очікуваним, ✗ — промах.
 
-**Підсумок (23 кейсів):** rules — відділ 21/23, категорія 7/14; ML — відділ 19/23, категорія 8/14.
+**Підсумок (44 кейсів):** rules — відділ 42/44, категорія 14/29; ML — відділ 37/44, категорія 17/29.
 
 Найцікавіше — рядки з ✗ на невиданій лексиці (ріпак, суперфосфат, лушпиння, гравій, крейда):
 саме там видно межу підходів «ключові слова» і ML на малих даних.
@@ -33,3 +33,24 @@
 | `h-trap-vague` | вітаю, підкажіть будь ласка по продукції | general<br>— | ✓ general<br>— | ✓ general<br>— |
 | `h-trap-delivery` | а ви возите в Польщу? | general<br>— | ✓ general<br>— | ✓ general<br>— |
 | `h-trap-overload` | нужен биг бэг под зерно на 5 тонн | bigbag<br>grain | ✓ bigbag<br>✓ grain | ✓ bigbag<br>✓ grain |
+| `h-millet` | тара під просо, тонна | bigbag<br>grain | ✓ bigbag<br>✗ — | ✓ bigbag<br>✓ grain |
+| `h-sorghum` | біг-беги під сорго | bigbag<br>grain | ✓ bigbag<br>✗ — | ✓ bigbag<br>✓ grain |
+| `h-lentil` | потрібні беги під чечевицю | bigbag<br>grain | ✓ bigbag<br>✗ — | ✓ bigbag<br>✓ grain |
+| `h-chickpea` | биг бэги под нут | bigbag<br>grain | ✓ bigbag<br>✗ — | ✓ bigbag<br>✗ oilcake |
+| `h-beans` | пакування під квасолю | bigbag<br>grain | ✓ bigbag<br>✗ — | ✗ general<br>✗ — |
+| `h-diamm` | беги під діамофоску | bigbag<br>fertilizer | ✓ bigbag<br>✗ — | ✓ bigbag<br>✓ fertilizer |
+| `h-urea` | нужны биг беги под мочевину | bigbag<br>fertilizer | ✓ bigbag<br>✗ — | ✓ bigbag<br>✗ oilcake |
+| `h-rapemeal` | беги під ріпаковий шрот | bigbag<br>oilcake | ✓ bigbag<br>✓ oilcake | ✓ bigbag<br>✓ oilcake |
+| `h-rapecake` | макуха ріпакова, тонна | bigbag<br>oilcake | ✓ bigbag<br>✓ oilcake | ✓ bigbag<br>✓ oilcake |
+| `h-agripellet` | потрібні беги під агропелети | bigbag<br>biofuel | ✓ bigbag<br>✓ biofuel | ✓ bigbag<br>✓ biofuel |
+| `h-peat` | тара под торфобрикеты | bigbag<br>biofuel | ✓ bigbag<br>✓ biofuel | ✓ bigbag<br>✓ biofuel |
+| `h-fishfeed` | беги під корм для риби | bigbag<br>feed | ✓ bigbag<br>✓ feed | ✓ bigbag<br>✓ feed |
+| `h-keramzit` | тара під керамзит | bigbag<br>quarry | ✓ bigbag<br>✗ — | ✓ bigbag<br>✗ feed |
+| `h-butstone` | біг-беги під бутовий камінь | bigbag<br>quarry | ✓ bigbag<br>✓ quarry | ✓ bigbag<br>✗ oilcake |
+| `h-mp2` | интересует минеральный порошок МП-2 | limestone_powder<br>— | ✓ limestone_powder<br>— | ✓ limestone_powder<br>— |
+| `h-finelime` | потрібен тонкомелений вапняк | limestone_powder<br>— | ✓ limestone_powder<br>— | ✓ limestone_powder<br>— |
+| `h-en-barley` | fibc bags for barley export, 1t | bigbag<br>grain | ✓ bigbag<br>✓ grain | ✗ general<br>✗ — |
+| `h-en-mp` | price for mineral powder MP-1 | limestone_powder<br>— | ✓ limestone_powder<br>— | ✗ general<br>— |
+| `h-trap-invoice` | можна рахунок-фактуру на оплату? | general<br>— | ✓ general<br>— | ✓ general<br>— |
+| `h-trap-return` | хочу повернути партію, виявили брак | general<br>— | ✓ general<br>— | ✓ general<br>— |
+| `h-trap-office` | где находится ваш офис? | general<br>— | ✓ general<br>— | ✓ general<br>— |

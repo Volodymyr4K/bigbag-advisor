@@ -11,4 +11,10 @@ next-env.d.ts
 
 # Локальні робочі правила — не для публічного репо
 CLAUDE.md
+
+# Зібрані запити (flywheel) — це дані рантайму, не код
+data/miss-log.jsonl
+
+# Перезібрані сторінки (npm run scrape) — регенеруються, канон у data/raw/*.uk.txt
+data/raw/fetched/
 .gstack/
