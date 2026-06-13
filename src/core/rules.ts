@@ -76,8 +76,10 @@ export function classifyProduct(text: string): ProductCategory | null {
 
 export function parseWeightKg(text: string): number | null {
   const t = text.toLowerCase();
-  // «1 т», «1.5 тонни», «1000 кг», «500кг»
-  const tonne = t.match(/(\d+(?:[.,]\d+)?)\s*(?:т\b|тон|tonne|ton\b)/);
+  // «1 т», «1.5 тонни», «1000 кг», «500кг».
+  // \b не використовуємо — він не працює з кирилицею; натомість негативний
+  // lookahead, щоб «т» не ловилось усередині слів («товар», «тиждень»).
+  const tonne = t.match(/(\d+(?:[.,]\d+)?)\s*(?:тонн[аи]?|тон|т|tonnes?|tons?|t)(?![а-яіїєґa-z])/);
   if (tonne) return Math.round(parseFloat(tonne[1].replace(",", ".")) * 1000);
   const kg = t.match(/(\d{3,4})\s*(?:кг|kg)/);
   if (kg) return parseInt(kg[1], 10);

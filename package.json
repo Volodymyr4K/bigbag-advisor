@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "bench": "tsx src/eval/bench.ts",
-    "bench:rules": "RULES_ONLY=1 tsx src/eval/bench.ts",
+    "bench:offline": "RULES_ONLY=1 tsx src/eval/bench.ts",
+    "test": "node --import tsx --test src/test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
