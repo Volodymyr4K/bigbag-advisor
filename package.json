@@ -10,6 +10,7 @@
     "start": "next start",
     "bench": "tsx src/eval/bench.ts",
     "bench:offline": "RULES_ONLY=1 tsx src/eval/bench.ts",
+    "report": "tsx src/eval/report.ts",
     "test": "node --import tsx --test src/test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
