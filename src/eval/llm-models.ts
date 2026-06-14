@@ -107,7 +107,9 @@ async function main() {
     let t0 = Date.now();
     const g = await runModel(m, false);
     console.log(` готово за ${Math.round((Date.now() - t0) / 1000)}с (fails: ${g.fails})`);
-    rows.push(rowLLM(m, g));
+    const r = rowLLM(m, g);
+    rows.push(r);
+    console.log(`    → Відділ ${r["Відділ"]} · Категорія ${r["Категорія"]} · Spec-на-не-бег ${r["Spec на не-бег ↓"]} · ${r["Латентн."]}`);
     const entry: Record<string, unknown> = { model: m, grounded: g };
     if (WITH_NOGROUND) {
       process.stdout.write(`  ганяю ${m} (no-ground) ...`);
