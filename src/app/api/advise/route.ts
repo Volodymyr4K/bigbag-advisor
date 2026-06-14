@@ -22,7 +22,11 @@ export async function POST(req: Request) {
   const useLlm = body.engine === "llm";
   if (useLlm && !hasApiKey()) {
     return NextResponse.json(
-      { error: "LLM-режим недоступний: не заданий OPENROUTER_API_KEY. Працює rules-режим." },
+      {
+        error:
+          "LLM у цій демці вимкнено навмисно (потребує платного API-ключа). " +
+          "Доступні режими «правила» і «ML». Це не помилка — так задумано для публічного демо.",
+      },
       { status: 503 },
     );
   }

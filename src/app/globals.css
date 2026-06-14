@@ -44,6 +44,17 @@ button:disabled { opacity: .5; cursor: default; }
 .draft { white-space: pre-wrap; background: #0c0e12; border-radius: 8px; padding: 12px; margin-top: 12px; }
 .warn { color: var(--accent); }
 .err { color: var(--bad); }
+.card.info { border-color: #2b4a63; background: #0e1820; color: var(--text); line-height: 1.55; }
+.card.info a { color: var(--accent); }
+.hint {
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+  color: var(--muted); background: #0e1820; border: 1px solid #2b4a63;
+}
+.hint a { color: var(--accent); }
+.tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; background: #2b4a63; color: #cfe3f2; vertical-align: middle;
+}
 .chips { margin-top: 8px; }
 .chips small { color: var(--muted); cursor: pointer; margin-right: 10px; text-decoration: underline; }
 a { color: var(--accent); }

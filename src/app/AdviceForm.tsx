@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Advice } from "@/core/types";
 
 const EXAMPLES = [
@@ -11,17 +11,43 @@ const EXAMPLES = [
   "Потрібен біг-бег під зерно на 3 тонни",
 ];
 
+// Пояснення, чому LLM вимкнено в публічній демці — щоб було ясно, що це
+// навмисно, а не помилка.
+const LLM_DEMO_NOTE =
+  "У публічній демці LLM вимкнено навмисно — він потребує платного API-ключа. " +
+  "Тут увімкнено безкоштовні режими «правила» і «ML» (вони ж найточніші в маршрутизації). " +
+  "Що саме додає LLM і де він виграє — показано у відтворюваному бенчмарку в README. " +
+  "Локально вмикається одним рядком у .env.";
+
 export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [usage, setUsage] = useState<{ costUsd: number; latencyMs: number; model: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [llmAvailable, setLlmAvailable] = useState<boolean | null>(null);
+
+  // Дізнаємось, чи доступний LLM-режим (чи заданий ключ на сервері).
+  useEffect(() => {
+    fetch("/api/advise")
+      .then((r) => r.json())
+      .then((d) => setLlmAvailable(!!d.llmAvailable))
+      .catch(() => setLlmAvailable(false));
+  }, []);
 
   async function run(engine: "rules" | "ml" | "llm") {
     if (!text.trim()) return;
+    // LLM вимкнено в демці — показуємо дружнє пояснення замість запиту, що впаде.
+    if (engine === "llm" && llmAvailable === false) {
+      setErr(null);
+      setAdvice(null);
+      setInfo(LLM_DEMO_NOTE);
+      return;
+    }
     setLoading(true);
     setErr(null);
+    setInfo(null);
     setAdvice(null);
     setUsage(null);
     try {
@@ -43,6 +69,8 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
       setLoading(false);
     }
   }
+
+  const llmOff = variant === "desk" && llmAvailable === false;
 
   return (
     <div>
@@ -67,13 +95,27 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
             <button className="ghost" onClick={() => run("ml")} disabled={loading}>
               Через ML
             </button>
-            <button className="ghost" onClick={() => run("llm")} disabled={loading}>
-              Через LLM
+            <button
+              className="ghost"
+              onClick={() => run("llm")}
+              disabled={loading}
+              title={llmOff ? "У демці LLM вимкнено навмисно (потрібен платний ключ)" : undefined}
+            >
+              Через LLM {llmOff && <span className="tag">демо</span>}
             </button>
           </>
         )}
       </div>
 
+      {llmOff && (
+        <p className="hint">
+          ℹ️ Це публічна демка: <b>LLM вимкнено навмисно</b> (потребує платного ключа). Режими
+          «правила» і «ML» — повноцінні. Як працює LLM-шар — у бенчмарку в{" "}
+          <a href="https://github.com/Volodymyr4K/bigbag-advisor#виміряні-результати">README</a>.
+        </p>
+      )}
+
+      {info && <div className="card info">ℹ️ {info}</div>}
       {err && <div className="card err">⚠️ {err}</div>}
 
       {advice && (
