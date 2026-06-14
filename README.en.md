@@ -38,9 +38,9 @@ actually needed and where something simpler is enough**. Picking a big-bag looks
 LLM task, but VBA's page is in fact a near-deterministic table: cargo type → spec. So the
 correct engineering stance is to climb the **ladder bottom-up**: dumb rules first, then
 classical ML, and only then an LLM — **measuring at each rung whether the higher rung is
-worth it**. Anti-hype here isn't a slogan but a measured result: on our data **rules win at
-routing, while the LLM wins at classifying rare vocabulary** — a hybrid is smartest (details
-and caveats below).
+worth it**. No hype — just a measured result: on our data **rules win at routing, while the
+LLM wins at classifying rare vocabulary**; the combination works best (details and caveats
+below).
 
 For the business there is a concrete cost of error: an invented spec (a size VBA doesn't
 sew) = a wrong order = lost money. That's why we measure **hallucinations** separately.
@@ -126,16 +126,17 @@ Note the nuance: on "rapeseed" ML guessed `grain`, while on "superphosphate" it 
    base, only **7% (1/15)**. So grounding cuts off-topic answers ~8×: the KB is needed not just
    for accuracy but to stop the model inventing answers where it shouldn't.
 
-**Honest takeaway (a nuance, not a slogan):** the right answer is a **hybrid**, not "all-LLM"
-nor "no LLM":
+**Honest takeaway (a nuance, not a slogan):** the right answer is a **combination**, not
+"all-LLM" nor "no LLM":
 - **department routing** → rules (instant, free, 98%);
 - **precise classification of rare/new cargo** → LLM (97% vs 48%), but only where rules genuinely
-  fall short — so you pay latency/cost only where it buys accuracy.
+  fall short — so you pay latency/cost only when it buys accuracy.
 
-Anti-hype here isn't "LLMs are bad", it's "**each rung has its job, and that's measured**".
+In short: the question isn't "LLM or rules" but **which tool at which step** — and the answer
+here comes from measurement, not opinion.
 
 **Caveat (so as not to overclaim):** the sample is small (n=29 categories), numbers are
-indicative; tested on **two** instruct models because the other free models were unavailable
+indicative; tested on **three** instruct models because the other free models were unavailable
 (429) at run time. A paid model would be faster and probably no worse.
 
 ```bash
