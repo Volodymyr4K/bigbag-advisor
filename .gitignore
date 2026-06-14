@@ -17,4 +17,9 @@ data/miss-log.jsonl
 
 # Перезібрані сторінки (npm run scrape) — регенеруються, канон у data/raw/*.uk.txt
 data/raw/fetched/
+
+# Результати мультимодельного LLM-прогону — недетерміновані (залежать від доступності
+# free-моделей і латентності). Канонічні цифри — у README; детермінований артефакт —
+# data/bench-results.json (rules+ML offline).
+data/llm-models-results.json
 .gstack/

@@ -252,7 +252,8 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
 - ML is trained on **synthetic** data (the business has no real request corpus yet) — so its
   "loss" to rules is expected and honest, not a verdict on classical ML in general.
 - The LLM was measured on **free** instruct models (via OpenRouter; the key has a $0 limit that
-  blocks paid models). Clean full data came from two (`nemotron-nano-9b-v2`, `nex-n2-pro`) — the
+  blocks paid models). Clean full data came from three (`nemotron-nano-9b-v2`,
+  `nemotron-3-super-120b`, `nex-n2-pro`) — the
   other free models were unavailable (429) at test time. The ~10–12 s latency is a free-endpoint
   property; a paid model would be faster. My first run mismeasured with a reasoning model
   (`gpt-oss`) that didn't emit JSON reliably — corrected (see "Honest correction" above).
