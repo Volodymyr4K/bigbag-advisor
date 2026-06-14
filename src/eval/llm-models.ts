@@ -18,6 +18,7 @@ import type { Case } from "./dataset";
 const WITH_NOGROUND = !!process.env.LLM_WITH_NOGROUND;
 
 const CONCURRENCY = Number(process.env.LLM_CONCURRENCY) || 5;
+const REPEATS = Number(process.env.LLM_REPEATS) || 1; // скільки grounded-прогонів на модель (для розкиду)
 
 interface Stat {
   n: number; deptOK: number;
@@ -101,23 +102,37 @@ async function main() {
   console.log(`\nHELD-OUT: ${HELDOUT.length} кейсів · grounded${WITH_NOGROUND ? " + no-ground" : ""} · паралелізм ${CONCURRENCY}`);
   console.log(`Моделі: ${models.join(", ")}\n`);
 
+  const groundedOff = !!process.env.LLM_NOGROUND_ONLY;
   const jsonModels: Record<string, unknown>[] = [];
   for (const m of models) {
-    process.stdout.write(`  ганяю ${m} (grounded) ...`);
-    let t0 = Date.now();
-    const g = await runModel(m, false);
-    console.log(` готово за ${Math.round((Date.now() - t0) / 1000)}с (fails: ${g.fails})`);
-    const r = rowLLM(m, g);
-    rows.push(r);
-    console.log(`    → Відділ ${r["Відділ"]} · Категорія ${r["Категорія"]} · Spec-на-не-бег ${r["Spec на не-бег ↓"]} · ${r["Латентн."]}`);
-    const entry: Record<string, unknown> = { model: m, grounded: g };
-    if (WITH_NOGROUND) {
+    const runs: Stat[] = [];
+    for (let i = 0; i < (groundedOff ? 0 : REPEATS); i++) {
+      process.stdout.write(`  ганяю ${m} (grounded ${i + 1}/${REPEATS}) ...`);
+      const t0 = Date.now();
+      const g = await runModel(m, false);
+      console.log(` ${Math.round((Date.now() - t0) / 1000)}с (fails: ${g.fails})`);
+      const r = rowLLM(m, g);
+      console.log(`    → Відділ ${r["Відділ"]} · Категорія ${r["Категорія"]} · Spec-на-не-бег ${r["Spec на не-бег ↓"]} · ${r["Латентн."]}`);
+      runs.push(g);
+    }
+    // діапазон по прогонах (мін–макс) на головних метриках
+    const deptPcts = runs.map((s) => (s.n ? (100 * s.deptOK) / s.n : 0));
+    const catPcts = runs.map((s) => (s.catN ? (100 * s.catOK) / s.catN : 0));
+    const range = (a: number[]) => (a.length ? `${Math.round(Math.min(...a))}–${Math.round(Math.max(...a))}%` : "—");
+    if (runs.length > 1) {
+      console.log(`    📊 розкид по ${runs.length} прогонах: Відділ ${range(deptPcts)} · Категорія ${range(catPcts)}`);
+    }
+    if (runs.length) rows.push(rowLLM(m, runs[0]));
+
+    const entry: Record<string, unknown> = { model: m, groundedRuns: runs, deptRange: range(deptPcts), catRange: range(catPcts) };
+    if (WITH_NOGROUND || groundedOff) {
       process.stdout.write(`  ганяю ${m} (no-ground) ...`);
-      t0 = Date.now();
+      const t0 = Date.now();
       const ng = await runModel(m, true);
-      console.log(` готово за ${Math.round((Date.now() - t0) / 1000)}с (fails: ${ng.fails})`);
+      console.log(` ${Math.round((Date.now() - t0) / 1000)}с (fails: ${ng.fails})`);
       entry.noGround = ng;
-      console.log(`    no-ground spec-на-не-бег: ${pct(ng.specOnNonBag, ng.nonBagN)}`);
+      const groundedRef = runs.length ? ` (grounded було: ${pct(runs[0].specOnNonBag, runs[0].nonBagN)})` : "";
+      console.log(`    no-ground spec-на-не-бег: ${pct(ng.specOnNonBag, ng.nonBagN)}${groundedRef}`);
     }
     jsonModels.push(entry);
   }

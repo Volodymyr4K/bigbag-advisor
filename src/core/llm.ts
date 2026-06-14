@@ -114,11 +114,13 @@ async function callOpenRouter(system: string, user: string): Promise<{ raw: RawL
       });
     } catch (e) {
       clearTimeout(timer);
-      if ((e as Error).name === "AbortError" && attempt < 2) continue;
+      // Таймаут НЕ ретраїмо — деградований провайдер має падати швидко (fail-fast),
+      // інакше прогін «висить» на повільних ретраях. Бенч порахує це як fail.
       throw new Error(`fetch ${(e as Error).name}: ${(e as Error).message.slice(0, 60)}`);
     }
     clearTimeout(timer);
-    if (res.status === 429 && attempt < 2) {
+    const max429 = Number(process.env.LLM_429_RETRIES ?? 2);
+    if (res.status === 429 && attempt < max429) {
       await sleep(1500 * 2 ** attempt); // 1.5s, 3s
       continue;
     }
