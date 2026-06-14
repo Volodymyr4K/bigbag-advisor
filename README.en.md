@@ -262,6 +262,11 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
   other free models were unavailable (429) at test time. The ~10–12 s latency is a free-endpoint
   property; a paid model would be faster. My first run mismeasured with a reasoning model
   (`gpt-oss`) that didn't emit JSON reliably — corrected (see "Honest correction" above).
+- **Variance measured partially.** `nemotron-nano` over 3 grounded runs gave category
+  **83–86%** (small spread — the numbers are stable). Full 3× variance for all models and
+  no-ground for `super`/`nex` could **not** be collected: under sustained load the free
+  endpoints throttle (a single call is ~0.5 s, but a 44-call pass degrades to timeouts).
+  Rigorous variance needs a stable (paid) endpoint — that's the next step.
 - The spec is **typical**, not final: VBA sews to order, a manager confirms final sizes. The
   advisor states this in every reply.
 - The rules' synonym list must be extended for new vocabulary (this is exactly where an LLM
