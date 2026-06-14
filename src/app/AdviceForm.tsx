@@ -88,7 +88,7 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
       </div>
       <div className="row">
         <button onClick={() => run("rules")} disabled={loading}>
-          {loading ? "…" : "Підібрати (правила)"}
+          {loading ? "…" : variant === "desk" ? "Підібрати (правила)" : "Підібрати біг-бег"}
         </button>
         {variant === "desk" && (
           <>
@@ -120,8 +120,8 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
 
       {advice && (
         <div className="card">
-          <span className="badge">Відділ: {advice.routedTo.name}</span>{" "}
-          <span className="badge">engine: {advice.engine}</span>
+          <span className="badge">Відділ: {advice.routedTo.name}</span>
+          {variant === "desk" && <> <span className="badge">engine: {advice.engine}</span></>}
           {variant === "desk" && (
             <div className="sub" style={{ marginTop: 8 }}>
               {advice.routedTo.phone} · {advice.routedTo.email}
