@@ -5,6 +5,10 @@
 
 [🇺🇦 Українська](README.md) · 🇬🇧 English
 
+> **Why a business cares (in two sentences):** a sales rep types the customer's request as-is
+> and, in a second, gets a ready big-bag spec, the right department, and a draft reply. Less
+> busywork, a new hire is productive on day one, and the customer immediately sees who to contact.
+
 A big-bag (FIBC) spec advisor + inbound-request router for departments. The demo is
 configured for a real company — **Trade Group VBA** ([vba.com.ua](https://vba.com.ua/uk/)),
 a manufacturer of big-bags, limestone and mineral powder.
@@ -28,6 +32,14 @@ a manufacturer of big-bags, limestone and mineral powder.
 **Customer widget** (`/widget`) — same core, simpler interface for the website:
 
 ![widget](docs/screenshots/widget.png)
+
+**LLM mode** — handles rare/new vocabulary the rules don't know. On the word "rapeseed"
+(rules don't recognize it and honestly hand off to a department) the LLM produces a full spec:
+
+![llm-mode](docs/screenshots/llm-mode.png)
+
+> ℹ️ The public Vercel demo has the LLM off (it needs a paid key) — this screenshot shows what
+> it adds. The high latency in the shot is a free model under load; a paid model answers in ~1–2 s.
 
 ---
 
@@ -70,6 +82,12 @@ trained on a **synthetic** set (`src/ml/traindata.ts`).
 | ml (NaiveBayes) | 85% (28/33) | 86% (19/22) | 0% |
 
 ### HELD-OUT (fresh vocabulary — the honest picture)
+
+> **Why rules score only 48% category here — it's intentional, not "broken".** This set is
+> **deliberately** built from words the rule author never anticipated ("rapeseed",
+> "superphosphate", "expanded clay"). On typical requests (the DEV tab above) rules score 100%.
+> The point is the gap **48% → 83–97%**: it shows where simple rules give up and where AI
+> genuinely adds value.
 
 All engines are grounded (VBA's knowledge base in the prompt). LLM rows are free instruct
 models via OpenRouter. The "spec for a non-big-bag query ↓" column = answered with a spec on
@@ -271,21 +289,14 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
   may help — to be seen from the benchmark).
 - Model prices in `llm.ts` are approximate, for order-of-magnitude cost estimation.
 
-## Part of a series (portfolio thesis)
+## Approach (not a template)
 
-This project is part of a series with one theme: **honestly measure where AI actually helps
-and where something simpler (rules / classical ML) is enough, without bolting on an LLM for
-hype.** Shared approach: a fixed dataset, a baseline from the bottom, metrics (accuracy,
-hallucinations, cost), a reproducible benchmark.
-
-- [**clauselens**](https://github.com/Volodymyr4K/clauselens) — legal clause analysis with eval.
-- [**deskbench**](https://github.com/Volodymyr4K/deskbench) — front-desk assistant for service businesses, eval-first.
-- [**bigbag-advisor**](https://github.com/Volodymyr4K/bigbag-advisor) — *this one*: the full rules → ML → LLM ladder on held-out.
-- [market-efficiency-lab](https://github.com/Volodymyr4K/market-efficiency-lab) · [ownfleet](https://github.com/Volodymyr4K/ownfleet) · [vendora](https://github.com/Volodymyr4K/vendora) — adjacent projects.
-
-What makes **bigbag-advisor different** from its two neighbours: it's the only one that walks
-the *full* decision ladder (rules → classical ML → LLM) and measures on a **held-out** set
-that the more expensive rung isn't always worth it.
+This project was built **for VBA** — on their real content, around their departments and
+products. The method behind it is my usual one: **first measure where AI actually helps and
+where something simpler (rules / classical ML) is enough**, with a baseline from the bottom, a
+fixed dataset and a reproducible benchmark — not "because AI". I apply the same approach
+elsewhere too, e.g. [clauselens](https://github.com/Volodymyr4K/clauselens) (legal clauses with
+eval) and [deskbench](https://github.com/Volodymyr4K/deskbench) (front-desk for service businesses).
 
 ## Stack
 

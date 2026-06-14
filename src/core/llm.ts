@@ -195,11 +195,15 @@ function toAdvice(raw: RawLlmSpec, query: AdviceQuery, engine: string): { advice
       : "general";
   const dept = getDepartment(deptId);
 
+  // Людська назва типу вантажу з бази знань (а не сирий код «grain»).
+  const rules = KB.bigbag_rules as unknown as Record<string, { label?: string }>;
+  const catLabel = (c?: string | null) => (c && rules[c]?.label) || "Біг-бег";
+
   let spec: BigBagSpec | null = null;
   if (raw.isBigBagQuestion && raw.baseSize) {
     spec = {
       category: (raw.category as BigBagSpec["category"]) ?? null,
-      label: raw.category ? `Під ${raw.category}` : "Біг-бег",
+      label: catLabel(raw.category),
       loops: raw.loops ?? null,
       liner: raw.liner ?? null,
       baseSize: raw.baseSize ?? [],

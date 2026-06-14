@@ -158,9 +158,15 @@ export default function AdviceForm({ variant }: { variant: "desk" | "widget" }) 
                 <li><b>Джерело</b><span className="sub">{advice.spec.source}</span></li>
               )}
             </ul>
+          ) : advice.routedTo.id === "bigbag" ? (
+            <p className="sub" style={{ marginTop: 12 }}>
+              За описом не вдалося автоматично визначити тип вантажу (рідкісне чи нове слово) —
+              передаємо у відділ біг-бегів, менеджер підбере модель.
+              {variant === "desk" && " Саме тут вмикається LLM-режим: він розпізнає лексику, якої нема в правилах (див. README)."}
+            </p>
           ) : (
             <p className="sub" style={{ marginTop: 12 }}>
-              Це не запит на підбір біг-бега — передаємо у відділ.
+              Це питання не про підбір біг-бега — передаємо у профільний відділ.
             </p>
           )}
 
