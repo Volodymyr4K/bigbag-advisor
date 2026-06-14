@@ -5,15 +5,16 @@
 
 [🇺🇦 Українська](README.md) · 🇬🇧 English
 
-> **Why a business cares (in two sentences):** a sales rep types the customer's request as-is
-> and, in a second, gets a ready big-bag spec, the right department, and a draft reply. Less
-> busywork, a new hire is productive on day one, and the customer immediately sees who to contact.
+**bigbag-advisor** is a front-desk assistant for a flexible-packaging manufacturer. It removes
+the "guess the right big-bag model and who to forward this to" busywork: a rep or customer
+describes the cargo in plain words, and the assistant instantly suggests a spec, routes the
+request to the right department, and drafts a reply. Less manual work, a new hire is productive
+on day one, and the customer immediately sees who to contact.
 
-A big-bag (FIBC) spec advisor + inbound-request router for departments. The demo is
-configured for a real company — **Trade Group VBA** ([vba.com.ua](https://vba.com.ua/uk/)),
-a manufacturer of big-bags, limestone and mineral powder.
+The demo is configured for a real company — **Trade Group VBA**
+([vba.com.ua](https://vba.com.ua/uk/)), a manufacturer of big-bags, limestone and mineral powder.
 
-**What it does:** a sales rep (or a customer on the site) types free text —
+**How it works in practice:** a sales rep (or a customer on the site) types free text —
 *"big bags for sunflower, one ton, shipping by rail"* — and the system returns:
 
 1. a **typical big-bag spec** (size, loops, liner, top, Q-bag),
@@ -85,7 +86,7 @@ trained on a **synthetic** set (`src/ml/traindata.ts`).
 
 > **Why rules score only 48% category here — it's intentional, not "broken".** This set is
 > **deliberately** built from words the rule author never anticipated ("rapeseed",
-> "superphosphate", "expanded clay"). On typical requests (the DEV tab above) rules score 100%.
+> "superphosphate", "expanded clay"). On typical requests (the DEV table above) rules score 100%.
 > The point is the gap **48% → 83–97%**: it shows where simple rules give up and where AI
 > genuinely adds value.
 
