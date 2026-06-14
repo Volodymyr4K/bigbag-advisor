@@ -122,6 +122,11 @@ Note the nuance: on "rapeseed" ML guessed `grain`, while on "superphosphate" it 
 5. **Routing is the opposite — cheap rules win on value.** rules 98% at 0 ms and free; the LLM
    matches it (nex 100%) but you pay ~10 s of latency. Telling "big-bag vs limestone" apart is
    easy without an LLM.
+6. **The knowledge base genuinely keeps the LLM from making things up.** The same
+   `nemotron-nano` **without** the knowledge base (no-ground) answered with a spec on **53%
+   (8/15)** of non-big-bag queries — where it should have stayed silent; **with** the knowledge
+   base, only **7% (1/15)**. So grounding cuts off-topic answers ~8×: the KB is needed not just
+   for accuracy but to stop the model inventing answers where it shouldn't.
 
 **Honest takeaway (a nuance, not a slogan):** the right answer is a **hybrid**, not "all-LLM"
 nor "no LLM":
