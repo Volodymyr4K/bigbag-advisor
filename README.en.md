@@ -258,9 +258,9 @@ one itself: every query where it couldn't give a confident spec (low confidence 
 department) is quietly logged ([`src/core/misslog.ts`](src/core/misslog.ts) →
 `data/miss-log.jsonl`, view via `GET /api/misses`). Over months this becomes a real dataset
 the ML can finally learn from. Two honest caveats: on serverless (Vercel) the filesystem is
-ephemeral — in production this should point at a DB; and since the endpoint returns real
-customer query text, set env `MISSES_TOKEN` to lock it before any public deploy (without it
-the endpoint is open — local use only).
+ephemeral — in production this should point at a DB; and since the `/api/misses` endpoint
+returns real customer query text, it's **secure by default** — locked in production without
+`MISSES_TOKEN` (open locally for convenience).
 
 📄 Detailed rollout plan for VBA (processes, staff instructions, how to measure
 effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rollout.md).
