@@ -18,7 +18,14 @@ export default function WidgetPage({
         </p>
       )}
       <AdviceForm variant="widget" />
-      {!embed && <p className="foot">Торгова Група «ВБА» · демо-віджет.</p>}
+      {!embed && (
+        <p className="foot">
+          Торгова Група «ВБА» · Відділ біг-бегів:{" "}
+          <a href="tel:+380672316223">+380 67 231 62 23</a> ·{" "}
+          <a href="mailto:bigbag@vba.com.ua">bigbag@vba.com.ua</a> ·{" "}
+          <a href="https://vba.com.ua/uk/" target="_blank" rel="noopener noreferrer">vba.com.ua</a>
+        </p>
+      )}
     </main>
   );
 }
