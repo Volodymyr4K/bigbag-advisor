@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-13T18:45:06.081Z",
-  "llmEnabled": false,
-  "model": null,
+  "generatedAt": "2026-06-14T08:50:25.742Z",
+  "llmEnabled": true,
+  "model": "openai/gpt-oss-120b:free",
   "dev": {
     "size": 33,
     "engines": [
@@ -77,6 +77,40 @@
         "cost": 0,
         "latencySum": 0,
         "llmCalls": 0
+      },
+      {
+        "engine": "llm (grounded)",
+        "n": 44,
+        "deptCorrect": 25,
+        "catTotal": 29,
+        "catCorrect": 14,
+        "loopsTotal": 0,
+        "loopsCorrect": 0,
+        "linerTotal": 0,
+        "linerCorrect": 0,
+        "hallucinated": 0,
+        "specOnNonBag": 0,
+        "nonBagTotal": 15,
+        "cost": 0,
+        "latencySum": 830636,
+        "llmCalls": 44
+      },
+      {
+        "engine": "llm (no-ground)",
+        "n": 44,
+        "deptCorrect": 28,
+        "catTotal": 29,
+        "catCorrect": 14,
+        "loopsTotal": 0,
+        "loopsCorrect": 0,
+        "linerTotal": 0,
+        "linerCorrect": 0,
+        "hallucinated": 0,
+        "specOnNonBag": 2,
+        "nonBagTotal": 15,
+        "cost": 0,
+        "latencySum": 1011697,
+        "llmCalls": 44
       }
     ]
   }

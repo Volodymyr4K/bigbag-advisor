@@ -21,6 +21,7 @@ const MODEL = process.env.LLM_MODEL || "openai/gpt-4o-mini";
 const PRICES: Record<string, { in: number; out: number }> = {
   "openai/gpt-4o-mini": { in: 0.15, out: 0.6 },
   "openai/gpt-4o": { in: 2.5, out: 10 },
+  "openai/gpt-oss-120b:free": { in: 0, out: 0 },
   "meta-llama/llama-3.1-8b-instruct": { in: 0.02, out: 0.05 },
   "google/gemini-flash-1.5": { in: 0.075, out: 0.3 },
 };
@@ -50,26 +51,39 @@ interface RawLlmSpec {
   isBigBagQuestion?: boolean;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function callOpenRouter(system: string, user: string): Promise<{ raw: RawLlmSpec; usage: LlmUsage }> {
   if (!hasApiKey()) throw new Error("OPENROUTER_API_KEY не заданий — LLM-режим недоступний.");
   const t0 = Date.now();
-  const res = await fetch(`${BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
+  const body = JSON.stringify({
+    model: MODEL,
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
   });
-  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
+  // Ретрай лише на 429 (rate-limit) — типово для безкоштовних моделей.
+  // 402/403 (вичерпано ліміт/оплату) не ретраїмо: це не мине саме собою.
+  let res: Response;
+  for (let attempt = 0; ; attempt++) {
+    res = await fetch(`${BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+    if (res.status === 429 && attempt < 4) {
+      await sleep(2000 * 2 ** attempt); // 2s, 4s, 8s, 16s
+      continue;
+    }
+    break;
+  }
+  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 120)}`);
   const data = await res.json();
   const latencyMs = Date.now() - t0;
   const content = data.choices?.[0]?.message?.content ?? "{}";

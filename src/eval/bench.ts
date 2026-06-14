@@ -104,15 +104,18 @@ async function runDataset(cases: Case[], useLlm: boolean): Promise<EngineStats[]
       } catch (e) {
         console.error(`[llm] ${c.id}: ${(e as Error).message}`);
       }
-      try {
-        const ng = await adviseLlmNoGround({ text: c.text, lang: c.lang });
-        grade(llmNG, c, ng.advice, ng.usage);
-      } catch (e) {
-        console.error(`[llm-ng] ${c.id}: ${(e as Error).message}`);
+      if (!process.env.LLM_SKIP_NOGROUND) {
+        try {
+          const ng = await adviseLlmNoGround({ text: c.text, lang: c.lang });
+          grade(llmNG, c, ng.advice, ng.usage);
+        } catch (e) {
+          console.error(`[llm-ng] ${c.id}: ${(e as Error).message}`);
+        }
       }
     }
   }
-  return useLlm ? [rules, ml, llm, llmNG] : [rules, ml];
+  if (!useLlm) return [rules, ml];
+  return process.env.LLM_SKIP_NOGROUND ? [rules, ml, llm] : [rules, ml, llm, llmNG];
 }
 
 async function main() {
@@ -120,8 +123,10 @@ async function main() {
   console.log(`\nLLM: ${useLlm ? `УВІМКНЕНО (${process.env.LLM_MODEL || "openai/gpt-4o-mini"})` : "ВИМКНЕНО (нема ключа або RULES_ONLY)"}`);
   console.log("ML тренується на синтетичних даних (src/ml/traindata.ts), тест — на наборах нижче.\n");
 
+  // LLM на DEV не ганяємо: це набір, на якому тюнились правила, і в README
+  // DEV-таблиця LLM-рядків не має. LLM оцінюємо ТАМ, де він має значення — на held-out.
   console.log(`=== DEV (${DATASET.length} кейсів; правила тут мають «домашню перевагу») ===`);
-  const dev = await runDataset(DATASET, useLlm);
+  const dev = await runDataset(DATASET, false);
   console.table(dev.map(row));
 
   console.log(`\n=== HELD-OUT (${HELDOUT.length} свіжих кейсів; нова лексика; головна таблиця) ===`);
