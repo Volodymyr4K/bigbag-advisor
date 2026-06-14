@@ -13,7 +13,9 @@ import { buildDraft } from "./rules";
 import type { Advice, AdviceQuery, BigBagSpec, DepartmentId } from "./types";
 
 const BASE_URL = process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1";
-const MODEL = process.env.LLM_MODEL || "openai/gpt-4o-mini";
+// Читаємо модель на момент виклику (а не на імпорті), щоб мультимодельний
+// прогін міг перемикати LLM_MODEL між моделями в одному процесі.
+const currentModel = () => process.env.LLM_MODEL || "openai/gpt-4o-mini";
 
 // Орієнтовні ціни USD за 1М токенів (станом на конфіг). Лише для оцінки
 // вартості за розмову в бенчі. Якщо моделі немає в таблиці — рахуємо 0 і
@@ -53,8 +55,34 @@ interface RawLlmSpec {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Толерантний парсинг JSON: моделі люблять обгортати у ```json ... ``` або
+// додавати текст до/після. Зрізаємо фенси, далі пробуємо весь рядок, далі —
+// підрядок від першої { до останньої }. Порожнє → {}.
+function parseLoose(s: string): RawLlmSpec {
+  if (!s) return {};
+  let t = s.trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  try {
+    return JSON.parse(t);
+  } catch {
+    /* далі */
+  }
+  const i = t.indexOf("{");
+  const j = t.lastIndexOf("}");
+  if (i >= 0 && j > i) {
+    try {
+      return JSON.parse(t.slice(i, j + 1));
+    } catch {
+      /* далі */
+    }
+  }
+  return {};
+}
+
 async function callOpenRouter(system: string, user: string): Promise<{ raw: RawLlmSpec; usage: LlmUsage }> {
   if (!hasApiKey()) throw new Error("OPENROUTER_API_KEY не заданий — LLM-режим недоступний.");
+  const MODEL = currentModel();
   const t0 = Date.now();
   const body = JSON.stringify({
     model: MODEL,
@@ -67,18 +95,31 @@ async function callOpenRouter(system: string, user: string): Promise<{ raw: RawL
   });
   // Ретрай лише на 429 (rate-limit) — типово для безкоштовних моделей.
   // 402/403 (вичерпано ліміт/оплату) не ретраїмо: це не мине саме собою.
+  // Таймаут на запит, щоб жодна модель не «повісила» бенч (деякі free-провайдери
+  // інколи не відповідають). За замовчуванням 45 с; налаштовується LLM_TIMEOUT_MS.
+  const timeoutMs = Number(process.env.LLM_TIMEOUT_MS) || 45000;
   let res: Response;
   for (let attempt = 0; ; attempt++) {
-    res = await fetch(`${BASE_URL}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body,
-    });
-    if (res.status === 429 && attempt < 4) {
-      await sleep(2000 * 2 ** attempt); // 2s, 4s, 8s, 16s
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+      res = await fetch(`${BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body,
+        signal: ac.signal,
+      });
+    } catch (e) {
+      clearTimeout(timer);
+      if ((e as Error).name === "AbortError" && attempt < 2) continue;
+      throw new Error(`fetch ${(e as Error).name}: ${(e as Error).message.slice(0, 60)}`);
+    }
+    clearTimeout(timer);
+    if (res.status === 429 && attempt < 2) {
+      await sleep(1500 * 2 ** attempt); // 1.5s, 3s
       continue;
     }
     break;
@@ -86,12 +127,16 @@ async function callOpenRouter(system: string, user: string): Promise<{ raw: RawL
   if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 120)}`);
   const data = await res.json();
   const latencyMs = Date.now() - t0;
-  const content = data.choices?.[0]?.message?.content ?? "{}";
-  let raw: RawLlmSpec = {};
-  try {
-    raw = JSON.parse(content);
-  } catch {
-    raw = {};
+  const msg = data.choices?.[0]?.message ?? {};
+  // Деякі моделі (особливо reasoning) кладуть відповідь у content, частину —
+  // у reasoning. Беремо content, а якщо порожній — пробуємо reasoning.
+  const content: string = (msg.content && msg.content.trim()) || msg.reasoning || "";
+  const raw = parseLoose(content);
+  if (process.env.LLM_DEBUG) {
+    const ok = Object.keys(raw).length > 0;
+    console.error(
+      `[LLM_DEBUG ${MODEL}] parsed=${ok} dept=${raw.department ?? "?"} isBag=${raw.isBigBagQuestion ?? "?"} cat=${raw.category ?? "?"} | content[0:140]=${JSON.stringify(content.slice(0, 140))}`,
+    );
   }
   const pt = data.usage?.prompt_tokens ?? 0;
   const ct = data.usage?.completion_tokens ?? 0;
