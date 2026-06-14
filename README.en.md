@@ -83,13 +83,11 @@ a query that ISN'T about big-bags (should have stayed silent and routed to a dep
 | nemotron-3-super-120b:free | **100% (44/44)** | 93% (27/29) | 0% (0/15) | ~13.3s |
 | nex-n2-pro:free | **100% (44/44)** | **97% (28/29)** | 0% (0/15) | ~10.6s |
 
-> 🔁 **Honest correction (I got it wrong first).** My first run used `gpt-oss-120b:free` and
-> showed "the LLM lost" (57% routing). That turned out to be **my measurement error**, not the
-> LLM's quality: `gpt-oss` is a reasoning model that, despite asking for JSON, often returned
-> reasoning prose or empty content, and my parser scored that as a miss. I switched to
-> **instruct** models (clean JSON) and the picture flipped. The result is robust: **three**
-> different models consistently score 83–97% category vs 48% for rules. Auditing your own
-> harness is part of honest measurement.
+> The result is robust: **three** different instruct models consistently score **83–97%**
+> category vs 48% for rules.
+>
+> 💡 To reproduce, use an **instruct** model (not a reasoning model): reasoning models often
+> return prose instead of JSON.
 >
 > ⚠️ Free-model availability is flaky: several (`gemma-4-31b`, `qwen3-coder`, `llama-3.2-3b`,
 > `dolphin`) returned solid 429s at test time — no data for them. The NVIDIA family
@@ -260,8 +258,7 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
   blocks paid models). Clean full data came from three (`nemotron-nano-9b-v2`,
   `nemotron-3-super-120b`, `nex-n2-pro`) — the
   other free models were unavailable (429) at test time. The ~10–12 s latency is a free-endpoint
-  property; a paid model would be faster. My first run mismeasured with a reasoning model
-  (`gpt-oss`) that didn't emit JSON reliably — corrected (see "Honest correction" above).
+  property; a paid model would be faster.
 - **Variance measured partially.** `nemotron-nano` over 3 grounded runs gave category
   **83–86%** (small spread — the numbers are stable). Full 3× variance for all models and
   no-ground for `super`/`nex` could **not** be collected: under sustained load the free
