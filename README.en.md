@@ -139,11 +139,19 @@ Note the nuance: on "rapeseed" ML guessed `grain`, while on "superphosphate" it 
 5. **Routing is the opposite — cheap rules win on value.** rules 98% at 0 ms and free; the LLM
    matches it (nex 100%) but you pay ~10 s of latency. Telling "big-bag vs limestone" apart is
    easy without an LLM.
-6. **The knowledge base genuinely keeps the LLM from making things up.** The same
-   `nemotron-nano` **without** the knowledge base (no-ground) answered with a spec on **53%
-   (8/15)** of non-big-bag queries — where it should have stayed silent; **with** the knowledge
-   base, only **7% (1/15)**. So grounding cuts off-topic answers ~8×: the KB is needed not just
-   for accuracy but to stop the model inventing answers where it shouldn't.
+6. **The knowledge base genuinely keeps the LLM from making things up — across all three
+   models.** Without the knowledge base (no-ground) the models answer with a spec on queries
+   that are NOT about big-bags (where they should stay silent and route to a department);
+   **with** the KB they mostly stop:
+
+   | model | no-ground | grounded |
+   |---|---|---|
+   | nemotron-nano | 53% (8/15) | 7% (1/15) |
+   | nemotron-3-super | 33% (5/15) | **0% (0/15)** |
+   | nex-n2-pro | 13% (2/15) | **0% (0/15)** |
+
+   The effect is consistent across all three (two drop to zero). The KB is needed not just for
+   accuracy but to stop the model answering where it shouldn't.
 
 **Honest takeaway (a nuance, not a slogan):** the right answer is a **combination**, not
 "all-LLM" nor "no LLM":
@@ -279,11 +287,12 @@ effectiveness, where AI is **not** needed): [`docs/vba-rollout.md`](docs/vba-rol
   `nemotron-3-super-120b`, `nex-n2-pro`) — the
   other free models were unavailable (429) at test time. The ~10–12 s latency is a free-endpoint
   property; a paid model would be faster.
-- **Variance measured partially.** `nemotron-nano` over 3 grounded runs gave category
-  **83–86%** (small spread — the numbers are stable). Full 3× variance for all models and
-  no-ground for `super`/`nex` could **not** be collected: under sustained load the free
-  endpoints throttle (a single call is ~0.5 s, but a 44-call pass degrades to timeouts).
-  Rigorous variance needs a stable (paid) endpoint — that's the next step.
+- **Variance measured partially.** `nemotron-nano` over grounded runs gave category
+  **79–86%** (small spread — the numbers are stable), routing 91% stable. No-ground was
+  collected for all three models (table in point 6 above). Full 3× variance **per model**
+  could **not** be collected: under sustained load the free endpoints throttle (a single call
+  is ~0.5 s, but nano's second pass degraded to **~56 s/call** and **1873 s** for 44 cases).
+  Rigorous 3× variance across all models needs a stable (paid) endpoint — that's the next step.
 - The spec is **typical**, not final: VBA sews to order, a manager confirms final sizes. The
   advisor states this in every reply.
 - The rules' synonym list must be extended for new vocabulary (this is exactly where an LLM
